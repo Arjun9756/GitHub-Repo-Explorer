@@ -1,11 +1,18 @@
 const axios = require('axios')
 const cacheService = require('./Cache.Service')
+const dotenv = require('dotenv')
+const path = require('path')
+
+dotenv.config({
+    path:path.join(__dirname , ".." , ".." , ".env")
+})
 
 const GITHUB_API_BASE = "https://api.github.com"
 const GITHUB_HEADERS = {
     Accept: "application/vnd.github.com",
     Authorization: `Bearer ${process.env.GITHUB_TOKEN || ""}`
 }
+
 /**
  * @param {string} Github Username 
  * @returns {Promise<object>} Github User Profile 
