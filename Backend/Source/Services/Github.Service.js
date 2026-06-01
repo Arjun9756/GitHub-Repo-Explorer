@@ -13,7 +13,7 @@ const GITHUB_HEADERS = {
 
 async function getUserProfile(userName) {
     try {
-        const cacheKey = `user: ${userName}`
+        const cacheKey = `user:${userName}`
         const cached = cacheService.get(cacheKey)
 
         if (cached) {
@@ -54,7 +54,7 @@ async function getUserProfile(userName) {
 
 async function getUserRepos(userName, pageNo = 1) {
     try {
-        const cacheKey = ` repos: ${userName}: ${pageNo}`
+        const cacheKey = ` repos:${userName}:${pageNo}`
         const cached = cacheService.get(cacheKey)
 
         if (cached) {
