@@ -13,6 +13,13 @@ app.use(cors({
     optionsSuccessStatus:204
 }))
 
+app.get("/", (req, res) => {
+    res.json({
+        success: true,
+        message: "API is running"
+    });
+});
+
 app.get('/health' , function(req,res,next){
     return res.status(200).json({
         status:true,
