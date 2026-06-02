@@ -91,16 +91,18 @@ async function getUserRepos(userName, pageNo = 1) {
             forks_count: repo.forks_count
         }))
 
-        const linkHeader = response.headers["link"]
-        const hasNextPage = linkHeader ? linkHeader.includes(`rel=next`) : false
+        // Check if there's a next page - if we got 30 repos, there might be more
+        // GitHub API returns Link header with pagination info
+        const linkHeader = response.headers.link || ""
+        const hasNextPage = linkHeader.includes('rel="next"') || linkHeader.includes("rel='next'") || repos.length === 30
 
         const result = {
             repos,
             hasNextPage,
-            currentPage:pageNo
+            currentPage: pageNo
         }
 
-        cacheService.set(cacheKey , result)
+        cacheService.set(cacheKey, result)
         return result
 
     } catch (error) {
