@@ -231,7 +231,7 @@ Given more time, I would:
 - **Persistent recently searched** — move from localStorage to a backend store so it syncs across devices
 - **Better error messages** — distinguish between rate limit errors and genuine 404s more clearly in the UI
 - **End-to-end tests** — using Playwright or Cypress for full user flow testing
-- **Two-prfile-comparison** - using the meta data of github profile and respository
+- **Two-profile-comparison** - using the meta data of github profile and respository
 
 ## Honest Notes
 
