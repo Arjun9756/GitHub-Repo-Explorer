@@ -1,6 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getRepos, getUser } from "./services/api";
+import { PieChart, Pie, Tooltip, Cell, ResponsiveContainer, Legend } from "recharts";
 import "./App.css";
+
+const COLORS = ["#0066cc", "#00a86b", "#ff6347", "#ffd700", "#9370db", "#ff8c00", "#20b2aa", "#ff69b4"];
+
+// Debounce utility function
+const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+
+  return debouncedValue;
+};
 
 const formatDate = (dateString) => {
   const date = new Date(dateString);
@@ -31,35 +49,49 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [sortBy, setSortBy] = useState("stars");
+  const debouncedUsername = useDebounce(username, 800);
+
+  // Auto search when debounced username changes
+  useEffect(() => {
+    if (!debouncedUsername.trim()) {
+      setUser(null);
+      setRepos([]);
+      return;
+    }
+
+    const performSearch = async () => {
+      try {
+        setLoading(true);
+        setError("");
+        setRepos([]);
+        setCurrentPage(1);
+
+        const userData = await getUser(debouncedUsername.trim());
+        setUser(userData);
+
+        const repoData = await getRepos(debouncedUsername.trim(), 1);
+        setRepos(repoData.repos);
+        setHasNextPage(repoData.hasNextPage);
+        setCurrentPage(repoData.currentPage);
+      } catch (err) {
+        if (err.response?.status === 404) {
+          setError("GitHub user not found");
+        } else {
+          setError("Network error. Please try again.");
+        }
+        setUser(null);
+        setRepos([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    performSearch();
+  }, [debouncedUsername]);
 
   const handleSearch = async (e) => {
     e.preventDefault();
-    if (!username.trim()) return;
-
-    try {
-      setLoading(true);
-      setError("");
-      setRepos([]);
-      setCurrentPage(1);
-
-      const userData = await getUser(username.trim());
-      setUser(userData);
-
-      const repoData = await getRepos(username.trim(), 1);
-      setRepos(repoData.repos);
-      setHasNextPage(repoData.hasNextPage);
-      setCurrentPage(repoData.currentPage);
-    } catch (err) {
-      if (err.response?.status === 404) {
-        setError("GitHub user not found");
-      } else {
-        setError("Network error. Please try again.");
-      }
-      setUser(null);
-      setRepos([]);
-    } finally {
-      setLoading(false);
-    }
+    // No need to do anything - debounce will handle it
   };
 
   const handleLoadMore = async () => {
@@ -89,6 +121,19 @@ export default function App() {
         return 0;
     }
   });
+
+  // Calculate language distribution for pie chart
+  const languageData = repos.reduce((acc, repo) => {
+    if (repo.language) {
+      acc[repo.language] = (acc[repo.language] || 0) + 1;
+    }
+    return acc;
+  }, {});
+
+  const chartData = Object.entries(languageData).map(([name, value]) => ({
+    name,
+    value,
+  }));
 
   return (
     <>
@@ -143,6 +188,34 @@ export default function App() {
                   </div>
                 </div>
               </div>
+
+              {/* Language Distribution Chart */}
+              {chartData.length > 0 && (
+                <div className="chart-section">
+                  <h3>Language Distribution</h3>
+                  <div className="chart-container">
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={chartData}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={100}
+                          label={(entry) => `${entry.name}: ${entry.value}`}
+                        >
+                          {chartData.map((_, index) => (
+                            <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
 
               {/* Repositories Section */}
               <div className="repos-section">
